@@ -24,12 +24,15 @@ def read_json_annotated_images(json_path):
     """
     a_full = json.load(open(json_path))
     metadata = []
-    for im in list((a_full["_via_img_metadata"]).keys()):
-        dict = a_full["_via_img_metadata"][im]
+    avail_regions = []
+    if "_via_img_metadata"in a_full.keys():
+        avail_regions += list((a_full["_via_attributes"]["region"]["Name"]["options"]).keys())
+        a_full = a_full["_via_img_metadata"]
+    for im in list(a_full.keys()):
+        dict = a_full[im]
         dict.pop("size")
         metadata.append(dict)
-    avail_regions = a_full["_via_attributes"]["region"]["Name"]["options"]
-    return metadata, list(avail_regions.keys())
+    return metadata, avail_regions
 
 
 def __patch_rectangle(dict_shape):
@@ -93,7 +96,7 @@ def show_annotated_image(ax, metadata, list_regions, list_color_regions):
     return ax
 
 
-def convert_contour_into_mask(metadata, region_name, region_shape, ax=None):
+def convert_contour_into_mask(metadata, region_name, region_shape, directory="", ax=None):
     """
     Convert polygon and rectangular shape defined with VIA application into mask
     :param metadata: dictionary containing the path to the image and associated metadata
@@ -105,7 +108,7 @@ def convert_contour_into_mask(metadata, region_name, region_shape, ax=None):
     # Available region shapes
     switcher_shape = {"rect": __patch_rectangle, \
                       "polygon": __patch_polygon}
-    im_array = np.asarray(Image.open((metadata["filename"]).strip()))
+    im_array = np.asarray(Image.open((os.path.join(directory,metadata["filename"])).strip()))
     w = im_array.shape[1]
     h = im_array.shape[0]
     y,x = np.mgrid[:h,:w]
